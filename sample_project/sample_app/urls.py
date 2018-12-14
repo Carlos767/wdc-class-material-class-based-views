@@ -17,4 +17,5 @@ urlpatterns = [
     path('add-to-favorites/', views.AddFavorite.as_view(), name='add_to_favorites'),
     path('remove-from-favorites/', views.RemoveFavorite.as_view(), name='remove_from_favorites'),
     path('signup/', views.SignUpView.as_view(), name='signup'),
+    path('books/', views.BooksView.as_view(), name='books'),
 ]
