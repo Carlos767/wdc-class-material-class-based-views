@@ -1,11 +1,13 @@
 from datetime import datetime
 
+from django.views.generic import View
 from django.urls import reverse
 from django.http import HttpResponseNotFound
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils.decorators import method_decorator
 
 from .models import Author, Book
 from .forms import BookForm, SignUpForm
@@ -15,40 +17,45 @@ def is_staff(user):
     return user.is_staff
 
 
-def index(request):
-    sort_method = request.GET.get('sort', 'asc')
-    books = Book.objects.all()
-    if sort_method == 'asc':
-        books = books.order_by('popularity')
-    elif sort_method == 'desc':
-        books = books.order_by('-popularity')
+class IndexView(View):
 
-    if 'q' in request.GET:
-        q = request.GET['q']
-        books = books.filter(title__icontains=q)
+    def get(self, request, *args, **kwargs):
+        context = {}
+        books = Book.objects.all()
+        sort_method = request.GET.get('sort', 'asc')
+        if sort_method == 'asc':
+            books = books.order_by('popularity')
+        elif sort_method == 'desc':
+            books = books.order_by('-popularity')
 
-    # initialize list of favorite books for current session
-    request.session.setdefault('favorite_books', [])
-    request.session.save()
+        if 'q' in request.GET:
+            q = request.GET['q']
+            books = books.filter(title__icontains=q)
 
-    return render(request, 'books.html', {
-        'books': books,
-        'authors': Author.objects.all(),
-        'sort_method': sort_method,
-    })
+        # initialize list of favorite books for current session
+        request.session.setdefault('favorite_books', [])
+        request.session.save()
+
+        context['books'] = books
+        context['authors'] = Author.objects.all()
+        context['sort_method'] = sort_method
+
+        return render(request, 'books.html', context)
 
 
-@login_required
-@user_passes_test(is_staff)
-def create_book(request):
-    if request.method == 'GET':
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(is_staff), name='dispatch')
+class CreateBookView(View):
+
+    def get(self, request, *args, **kwargs):
         book_form = BookForm()
         return render(
             request,
             'create_book.html',
             context={'book_form': book_form}
         )
-    elif request.method == 'POST':
+
+    def post(self, request, *args, **kwargs):
         book_form = BookForm(request.POST)
         if book_form.is_valid():
             book_form.save()
@@ -60,11 +67,12 @@ def create_book(request):
         )
 
 
-@login_required
-@user_passes_test(is_staff)
-def edit_book(request, book_id=None):
-    book = get_object_or_404(Book, id=book_id)
-    if request.method == 'GET':
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(is_staff), name='dispatch')
+class EditBookView(View):
+
+    def get(self, request, *args, **kwargs):
+        book = get_object_or_404(Book, id=kwargs.get('book_id'))
         book_form = BookForm(instance=book)
         return render(
             request,
@@ -74,7 +82,9 @@ def edit_book(request, book_id=None):
                 'book_form': book_form
             }
         )
-    elif request.method == 'POST':
+
+    def post(self, request, *args, **kwargs):
+        book = get_object_or_404(Book, id=kwargs.get('book_id'))
         book_form = BookForm(request.POST, instance=book)
         if book_form.is_valid():
             book_form.save()
@@ -89,68 +99,78 @@ def edit_book(request, book_id=None):
         )
 
 
-@login_required
-@user_passes_test(is_staff)
-def delete_book(request):
-    book_id = request.POST.get('book_id')
-    book = get_object_or_404(Book, id=book_id)
-    book.delete()
-    return redirect('/')
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(is_staff), name='dispatch')
+class DeleteBookView(View):
+
+    def post(self, request, *args, **kwargs):
+        book_id = request.POST.get('book_id')
+        book = get_object_or_404(Book, id=book_id)
+        book.delete()
+        return redirect('/')
 
 
-def authors(request):
-    authors = Author.objects.all()
-    return render(request, 'authors.html', {
-        'authors': authors
-    })
+class AuthorsView(View):
+
+    def get(self, request, *args, **kwargs):
+        authors = Author.objects.all()
+        return render(request, 'authors.html', {
+            'authors': authors
+        })
 
 
-def author(request, author_id):
-    try:
-        author = Author.objects.get(id=author_id)
-    except Author.DoesNotExist:
-        return HttpResponseNotFound()
+class AuthorView(View):
 
-    return render(request, 'author.html', {
-        'author': author
-    })
+    def get(self, request, *args, **kwargs):
+        author = get_object_or_404(Author, id=kwargs.get('author_id'))
+        return render(request, 'author.html', {
+            'author': author
+        })
 
 
-def favorites(request):
-    books_ids = request.session.get('favorite_books', [])
-    favorite_books = Book.objects.filter(id__in=books_ids)
-    return render(
-        request,
-        'favorites.html',
-        context={
-            'favorite_books': favorite_books,
-        }
-    )
+class FavoritesView(View):
+
+    def get(self, request, *args, **kwargs):
+        books_ids = request.session.get('favorite_books', [])
+        favorite_books = Book.objects.filter(id__in=books_ids)
+        return render(
+            request,
+            'favorites.html',
+            context={
+                'favorite_books': favorite_books,
+            }
+        )
 
 
-def add_to_favorites(request):
-    request.session.setdefault('favorite_books', [])
-    request.session['favorite_books'].append(request.POST.get('book_id'))
-    request.session.save()
-    return redirect('index')
+class AddFavorite(View):
 
-
-def remove_from_favorites(request):
-    if request.session.get('favorite_books'):
-        request.session['favorite_books'].remove(request.POST.get('book_id'))
+    def post(self, request, *args, **kwargs):
+        request.session.setdefault('favorite_books', [])
+        request.session['favorite_books'].append(request.POST.get('book_id'))
         request.session.save()
-    return redirect('index')
+        return redirect('index')
 
 
-def signup(request):
-    if request.method == 'GET':
+class RemoveFavorite(View):
+
+    def post(self, request, *args, **kwargs):
+        if request.session.get('favorite_books'):
+            request.session['favorite_books'].remove(request.POST.get('book_id'))
+            request.session.save()
+        return redirect('index')
+
+
+class SignUpView(View):
+
+    def get(self, request, *args, **kwargs):
         signup_form = SignUpForm()
         return render(
             request,
             'signup.html',
             context={'signup_form': signup_form}
         )
-    elif request.method == 'POST':
+
+    def post(self, request, *args, **kwargs):
         signup_form = SignUpForm(request.POST)
         if signup_form.is_valid():
             user = User.objects.create(username=request.POST['username'])
