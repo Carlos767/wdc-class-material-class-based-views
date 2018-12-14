@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block main %}
+  <div>
+    <p class="lead">List of Favorite books:</p>
+    {% if favorite_books %}
+      <div>
+        <table class="table table-bordered table-hover text-center lead">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Book Title</th>
+              <th>Author</th>
+              <th>Popularity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for book in favorite_books %}
+              <tr>
+                <td class="align-middle">{{ book.id }}</td>
+                <td class="align-middle">{{ book.title}}</td>
+                <td class="align-middle"><a href="{% url 'author_by_id' book.author.id %}">{{ book.author.name}}</a></td>
+                <td class="align-middle">{{ book.popularity}}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div>
+        <p class="text-center font-italic lead">You didn't mark any book as favorite yet.</p>
+      </div>
+    {% endif %}
+    <div>
+      <a href="/"><button type="button" class="btn btn-outline-primary">← Back</button></a>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block main %}
+  <p class="h1">Welcome to our Library!</p>
+  <p class="lead">These are our selected authors:</p>
+  <table class="table table-bordered table-hover text-center lead">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Author Name</th>
+        <th>Country</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for author in authors %}
+        <tr>
+          <td>{{ author.id }}</td>
+          <td><a href="{% url 'author_by_id' author.id %}">{{ author.name}}</a></td>
+          <td>{{ author.country.name}}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <br>
+  <a href="/"><button type="button" class="btn btn-outline-primary">← Back</button></a>
+{% endblock %}

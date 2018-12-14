@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block main %}
+  <p class="h1">Welcome to our Library!</p>
+  <div class="lead">
+    <p>You're browsing our Author <strong>{{ author.name}}</strong> (born in {{ author.country.name }}):</p>
+    <p>Our collection includes:</p>
+    <ul>
+      {% for book in author.book_set.all %}
+      <li>{{ book.title }} ({{ book.popularity }})</li>
+      {% endfor %}
+    </ul>
+  </div>
+  <a href="/authors"><button type="button" class="btn btn-outline-primary">← Back</button></a>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block main %}
+  <p class="h1">Welcome to our Library!</p>
+  <p class="lead">These are our best books:</p>
+  <form action="" method="GET">
+    <div class="row">
+      <div class="col-4">
+        <input type="text" name="q" class="form-control">
+      </div>
+      <div class="col-1">
+        <input type="submit" class="btn btn-primary btn-xs" value="Search">
+      </div>
+      <div class="col-7">
+        {% if request.user.is_authenticated %}
+          <a href="/favorites" class="btn btn-outline-warning btn-xs float-right">→ Go to Favorites ({{request.session.favorite_books|length}})</a>
+        {% endif %}
+      </div>
+    </div>
+  </form>
+  <br>
+  <table class="table table-bordered table-hover text-center lead">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Book Title</th>
+        <th>Author</th>
+        <th><a href="/?sort={% if sort_method == 'asc' %}desc{% else %}asc{% endif %}">Popularity ({% if sort_method == 'asc' %}↓{% else %}↑{% endif %})</a></th>
+        {% if request.user.is_authenticated %}
+          <th>Favorite</th>
+          {% if request.user.is_staff %}
+            <th>Actions</th>
+          {% endif %}
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for book in books %}
+        <tr>
+          <td class="align-middle">{{ book.id }}</td>
+          <td class="align-middle">{{ book.title}}</td>
+          <td class="align-middle"><a href="{% url 'author_by_id' book.author.id %}">{{ book.author.name}}</a></td>
+          <td class="align-middle">{{ book.popularity}}</td>
+          {% if request.user.is_authenticated %}
+            <td>
+              {% if book.id|slugify not in request.session.favorite_books %}
+                <form action="{% url 'add_to_favorites' %}" method='post' class='inline'>
+                  {% csrf_token %}
+                  <button class="btn btn-outline-warning btn-xs far fa-star disabled" type="submit" name="add_to_favorites"></button>
+                  <input type="hidden" name="book_id" value="{{book.id}}">
+                </form>
+              {% else %}
+                <form action="{% url 'remove_from_favorites' %}" method='post' class='inline'>
+                  {% csrf_token %}
+                  <button class="btn btn-warning btn-xs far fa-star" type="submit" name="remove_from_favorites"></button>
+                  <input type="hidden" name="book_id" value="{{book.id}}">
+                </form>
+              {% endif %}
+            </td>
+          {% endif %}
+
+          {% if request.user.is_authenticated and request.user.is_staff %}
+            <td class="align-middle">
+              <div class="row justify-content-md-center">
+                <a href="/edit_book/{{book.id}}" style="margin-right: 5px;"><button type="button" class="btn btn-outline-warning btn-xs">Edit</button></a>
+                <form class="" action="/delete_book" method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name='book_id' value='{{book.id}}'>
+                  <input type="submit" value='Delete' class="btn btn-outline-danger btn-xs">
+                </form>
+              </div>
+            </td>
+          {% endif %}
+
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="lead"><a href="{% url 'authors' %}">Prefer to browse by author?</a></p>
+
+  {% if request.user.is_authenticated and request.user.is_staff %}
+    <a href="/create_book/"><button type="button" class="btn btn-info">Create Book</button></a>
+  {% endif %}
+{% endblock %}
