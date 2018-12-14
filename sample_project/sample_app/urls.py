@@ -9,7 +9,7 @@ urlpatterns = [
 
     path('', views.IndexView.as_view(), name='index'),
     path('authors/', views.AuthorsView.as_view(), name='authors'),
-    path('author/<int:author_id>/', views.AuthorView.as_view(), name='author_by_id'),
+    path('author/<int:pk>/', views.AuthorView.as_view(), name='author_by_id'),
     path('create_book/', views.CreateBookView.as_view(), name='create_book'),
     path('delete_book', views.DeleteBookView.as_view(), name='delete_book'),
     path('edit_book/<int:book_id>/', views.EditBookView.as_view(), name='edit_book'),

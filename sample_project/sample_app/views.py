@@ -3,6 +3,8 @@ from datetime import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.http import HttpResponseNotFound
+from django.views.generic.list import ListView
+from django.views.generic.detail import DetailView
 from django.contrib.auth import authenticate, login
 from django.utils.decorators import method_decorator
 from django.shortcuts import render, redirect, get_object_or_404
@@ -113,23 +115,14 @@ class DeleteBookView(View):
         return redirect('/')
 
 
-class AuthorsView(TemplateView):
+class AuthorsView(ListView):
+    model = Author
     template_name = 'authors.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['authors'] = Author.objects.all()
-        return context
 
-
-class AuthorView(TemplateView):
+class AuthorView(DetailView):
+    model = Author
     template_name = 'author.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        author = get_object_or_404(Author, id=kwargs.get('author_id'))
-        context['author'] = author
-        return context
 
 
 class FavoritesView(TemplateView):
