@@ -3,6 +3,7 @@ from datetime import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.http import HttpResponseNotFound
+from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.contrib.auth import authenticate, login
@@ -56,52 +57,44 @@ class BooksView(RedirectView):
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(user_passes_test(is_staff), name='dispatch')
-class CreateBookView(TemplateView):
+class CreateBookView(FormView):
     template_name = 'create_book.html'
+    form_class = BookForm
+    success_url = '/'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['book_form'] = BookForm()
-        return context
-
-    def post(self, request, *args, **kwargs):
-        book_form = BookForm(request.POST)
-        if book_form.is_valid():
-            book_form.save()
-            return redirect('index')
-        return render(
-            request,
-            'create_book.html',
-            context={'book_form': book_form}
-        )
+    def form_valid(self, form):
+        form.save()
+        return redirect('index')
 
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(user_passes_test(is_staff), name='dispatch')
-class EditBookView(TemplateView):
+class EditBookView(FormView):
     template_name = 'edit_book.html'
+    form_class = BookForm
+    success_url = '/'
+
+    def get_initial(self):
+        """Return the initial data to use for forms on this view."""
+        initial = super(EditBookView, self).get_initial()
+        book = get_object_or_404(Book, id=self.kwargs.get('book_id'))
+        initial['title'] = book.title
+        initial['author'] = book.author
+        initial['isbn'] = book.isbn
+        initial['popularity'] = book.popularity
+        return initial
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        book = get_object_or_404(Book, id=kwargs.get('book_id'))
+        book = get_object_or_404(Book, id=self.kwargs.get('book_id'))
         context['book'] = book
-        context['book_form'] = BookForm(instance=book)
         return context
 
-    def post(self, request, *args, **kwargs):
-        book = get_object_or_404(Book, id=kwargs.get('book_id'))
-        book_form = BookForm(request.POST, instance=book)
-        if book_form.is_valid():
-            book_form.save()
-            return redirect('index')
-        return render(
-            request,
-            'edit_book.html',
-            context={
-                'book': book,
-                'book_form': book_form
-            }
-        )
+    def form_valid(self, form):
+        book = get_object_or_404(Book, id=self.kwargs.get('book_id'))
+        form.instance = book
+        form.save()
+        return redirect('index')
 
 
 @method_decorator(login_required, name='dispatch')

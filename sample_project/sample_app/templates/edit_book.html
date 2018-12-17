@@ -5,7 +5,7 @@
   <form action="/edit_book/{{book.id}}/" method="POST">
     <p class="h3">Edit Book:</p>
     {% csrf_token %}
-    {{book_form|crispy}}
+    {{form|crispy}}
     <a href="/"><button type="button" class="btn btn-outline-primary">← Back</button></a>
     <input type="submit" value="Edit" class="btn btn-primary">
   </form>
