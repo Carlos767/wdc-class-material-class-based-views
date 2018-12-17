@@ -74,25 +74,13 @@ class EditBookView(FormView):
     form_class = BookForm
     success_url = '/'
 
-    def get_initial(self):
-        """Return the initial data to use for forms on this view."""
-        initial = super(EditBookView, self).get_initial()
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
         book = get_object_or_404(Book, id=self.kwargs.get('book_id'))
-        initial['title'] = book.title
-        initial['author'] = book.author
-        initial['isbn'] = book.isbn
-        initial['popularity'] = book.popularity
-        return initial
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        book = get_object_or_404(Book, id=self.kwargs.get('book_id'))
-        context['book'] = book
-        return context
+        kwargs['instance'] = book
+        return kwargs
 
     def form_valid(self, form):
-        book = get_object_or_404(Book, id=self.kwargs.get('book_id'))
-        form.instance = book
         form.save()
         return redirect('index')
 

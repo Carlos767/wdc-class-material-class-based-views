@@ -2,7 +2,7 @@
 {% load crispy_forms_tags %}
 
 {% block main %}
-  <form action="/edit_book/{{book.id}}/" method="POST">
+  <form action="/edit_book/{{form.instance.id}}/" method="POST">
     <p class="h3">Edit Book:</p>
     {% csrf_token %}
     {{form|crispy}}
