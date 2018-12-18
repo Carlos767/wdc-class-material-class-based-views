@@ -1,4 +1,4 @@
-requests>=2.1
+Django>=2.1
 django-bootstrap4==0.0.6
 django-crispy-forms==1.7.2
 requests>=2.20.0
