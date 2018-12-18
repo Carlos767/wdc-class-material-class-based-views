@@ -22,6 +22,11 @@ class IndexView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # Initialize the favorite_books variable in current session.
+        self.request.session.setdefault('favorite_books', [])
+        self.request.session.save()
+
         books = Book.objects.all()
         sort_method = self.request.GET.get('sort', 'asc')
         if sort_method == 'asc':
@@ -37,15 +42,6 @@ class IndexView(TemplateView):
         context['authors'] = Author.objects.all()
         context['sort_method'] = sort_method
         return context
-
-    def get(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-
-        # initialize list of favorite books for current session
-        request.session.setdefault('favorite_books', [])
-        request.session.save()
-
-        return self.render_to_response(context)
 
 
 class BooksView(RedirectView):
