@@ -1,4 +1,12 @@
 from django.db import models
+from django.core.exceptions import ValidationError
+
+def validate_even(value):
+    if value % 2 != 0:
+        raise ValidationError(
+            '%(value)s is not an even number',
+            params={'value': value},
+        )
 
 
 class Country(models.Model):
@@ -29,7 +37,8 @@ class Book(models.Model):
     title = models.CharField(max_length=255)
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
     isbn = models.CharField(max_length=255)
-    popularity = models.DecimalField(max_digits=4, decimal_places=2)
+    popularity = models.DecimalField(
+        max_digits=4, decimal_places=2, validators=[validate_even])
 
     def __str__(self):
         return "{}({})".format(self.title, self.author)
